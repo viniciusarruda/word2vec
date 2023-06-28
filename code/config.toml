@@ -1,0 +1,68 @@
+[owner]
+name = "Vinicius Arruda"
+github = "https://github.com/viniciusarruda"
+linkedin = "https://www.linkedin.com/in/viniciusarruda/"
+
+[experiment]
+seed = 1
+folder_path = "../experiment"
+
+
+[dataloader.train]
+shuffle = true
+batch_size = 512
+pin_memory = true
+drop_last = true
+
+[dataloader.validation]
+shuffle = false
+batch_size = 512
+pin_memory = true
+
+[dataloader.test]
+shuffle = false
+batch_size = 512
+pin_memory = true
+
+
+[model]
+name = "CBOW"
+embedding_dim = 300
+context_size = 5 # each side has context_size length
+
+[train]
+n_epochs = 5 #500
+
+
+[visualization]
+images_folder_path = "./images"
+
+
+[dataset]
+name = "wikitext-2" #"wikitext-2"
+
+
+# wikitext-2
+[dataset.wikitext-2.train]
+min_freq = 1
+file_path = "../dataset/wikitext-2/wiki.train.tokens"
+
+[dataset.wikitext-2.validation]
+file_path = "../dataset/wikitext-2/wiki.valid.tokens"
+
+[dataset.wikitext-2.test]
+file_path = "../dataset/wikitext-2/wiki.test.tokens"
+
+
+# wikitext-103
+[dataset.wikitext-103.train]
+min_freq = 50
+file_path = "../dataset/wikitext-103/wiki.train.tokens"
+
+[dataset.wikitext-103.validation]
+file_path = "../dataset/wikitext-103/wiki.valid.tokens"
+
+[dataset.wikitext-103.test]
+file_path = "../dataset/wikitext-103/wiki.test.tokens"
+
+
