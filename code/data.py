@@ -46,7 +46,7 @@ class Vocabulary:
                 vocab.add(default_token)
 
             self.word_to_idx = {word: idx for idx, word in enumerate(vocab)}
-            self.idx_to_word = {idx: word for idx, word in enumerate(vocab)}
+            self.idx_to_word = {idx: word for idx, word in enumerate(vocab)}  # TODO make as a list, save as a list ?
 
             if folder_path is not None:
                 Vocabulary._save_vocab_map(self.word_to_idx, os.path.join(folder_path, "word_to_idx.json"))
@@ -125,8 +125,7 @@ class ContextDataset(Dataset):
 
 def get_processed_data(context_size: int, dataset_config: dict, dataloader_config: dict, output_folder_path: str) -> dict:
     # TODO colocar docstring automaticamente
-
-    dataset_names = dataloader_config.keys()
+    dataset_names = dataset_config.keys()
 
     stats_folder_path = os.path.join(output_folder_path, "stats")
     os.makedirs(stats_folder_path)

@@ -4,7 +4,7 @@ github = "https://github.com/viniciusarruda"
 linkedin = "https://www.linkedin.com/in/viniciusarruda/"
 
 [experiment]
-seed = 1
+seed = 3407
 folder_path = "../experiment"
 
 
@@ -27,7 +27,7 @@ pin_memory = true
 
 [model]
 name = "CBOW"
-embedding_dim = 300
+embedding_dim = 100 #300
 context_size = 5 # each side has context_size length
 
 [train]
@@ -39,7 +39,13 @@ images_folder_path = "./images"
 
 
 [dataset]
-name = "wikitext-2" #"wikitext-2"
+name = "nltk-brown" #"wikitext-2"
+
+
+# nltk-brown
+[dataset.nltk-brown.train]
+min_freq = 5
+file_path = "../dataset/nltk-brown/nltk-brown.train.tokens"
 
 
 # wikitext-2

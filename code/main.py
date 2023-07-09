@@ -8,6 +8,8 @@ from data import get_processed_data
 from model import get_model
 from executor import Trainer, Evaluator
 from visualization import plot_embeddings, plot_embeddings_from_file
+from prettytable import PrettyTable
+import random
 
 
 def load_config(config_file_path: str = "config.toml") -> dict:
@@ -34,7 +36,19 @@ def main():
     print("-- 0 --")
     config = load_config()
 
+    # determinism
+    random.seed(config["experiment"]["seed"])
+    np.random.seed(config["experiment"]["seed"])
     torch.manual_seed(config["experiment"]["seed"])
+    torch.cuda.manual_seed_all(config["experiment"]["seed"])
+    os.environ["PYTHONHASHSEED"] = str(
+        config["experiment"]["seed"]
+    )  # I think I need to set this before lauching python interpreter
+
+    # TODO this slows down training, so put a flag here and set it at config file
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+
     print("-- 1 --")
     dataloaders, vocab = get_processed_data(
         config["model"]["context_size"],
@@ -55,8 +69,11 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # add verbose option
-    print(f"Length train_dataset: {len(dataloaders['train'].dataset)}")
-    print(f"Length train_dataloader: {len(dataloaders['train'])}")
+    table = PrettyTable(["Field", "Length"])
+    for k, v in dataloaders.items():
+        table.add_row([f"dataloaders['{k}'].dataset", len(v.dataset)])
+        table.add_row([f"dataloaders['{k}']", len(v)], divider=True)
+    print(table)
     print(f"Length vocab: {len(vocab)}")
 
     trainer = Trainer(
@@ -65,13 +82,14 @@ def main():
         config["train"]["n_epochs"],
         vocab,
         dataloaders["train"],
-        dataloaders["validation"],
+        dataloaders.get("validation", None),
         config["experiment"]["save_path"],
     )
     trainer.train()
 
-    evaluator = Evaluator(model, device, dataloaders["test"])
-    evaluator.evaluate()
+    if "test" in dataloaders:
+        evaluator = Evaluator(model, device, dataloaders["test"])
+        evaluator.evaluate()
 
     exit()
 

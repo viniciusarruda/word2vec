@@ -5,6 +5,21 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+import time
+
+
+class Timelapse:
+    def __init__(self, name):
+        self.start = None
+        self.name = name
+
+    def __enter__(self):
+        self.start = time.time()
+        print(f"Begin {self.name}..")
+        return self
+
+    def __exit__(self, type, value, traceback):
+        print(f"End {self.name} (took {time.time() - self.start:.2f} seconds).")
 
 
 class Trainer:
@@ -18,13 +33,11 @@ class Trainer:
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
         self.loss_fn = nn.CrossEntropyLoss()
-        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.1)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.025)
         self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer,
             lr_lambda=lambda epoch: (self.n_epochs - epoch) / self.n_epochs,
         )
-        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[200, 400, 600, 800], gamma=0.05)
 
         self.save_folder_path = save_folder_path
         os.makedirs(os.path.join(self.save_folder_path, "tensorboard"))
@@ -36,13 +49,13 @@ class Trainer:
         X_batch, _ = next(iter(self.train_dataloader))
         self.writer.add_graph(self.model, X_batch[0].unsqueeze(0).to(self.device))
 
-        # TODO check how much time this takes at the end
         for name, weight in self.model.named_parameters():
-            self.writer.add_histogram(name, weight, 0)  # change epoch to start on 1 instead of 0, so here could be 0
+            self.writer.add_histogram(name.replace(".", "/"), weight, 0)
 
-        for epoch in tqdm(range(self.n_epochs), desc="Training epochs"):
+        for epoch in tqdm(range(1, self.n_epochs + 1), desc="Training epochs"):
             self._train_epoch(epoch)
-            self._validate_epoch(epoch)
+            if self.val_dataloader is not None:
+                self._validate_epoch(epoch)
         self._save_model()
         # TODO
         # ja que coloquei coisa do tensorboard aqui, colocar as coisas do tensorboard dentro do save_model aqui
@@ -54,7 +67,10 @@ class Trainer:
 
         self.writer.add_scalar("train/lr", self.lr_scheduler.get_last_lr()[0], epoch)
 
-        for i, (X_batch, y_batch) in enumerate(tqdm(self.train_dataloader, desc=f"Training epoch #{epoch}", leave=False)):
+        for i, (X_batch, y_batch) in enumerate(
+            tqdm(self.train_dataloader, desc=f"Training epoch #{epoch}", leave=False),
+            start=(epoch - 1) * len(self.train_dataloader) + 1,
+        ):
             X_batch, y_batch = X_batch.to(self.device), y_batch.to(self.device)
 
             y_pred = self.model(X_batch)
@@ -65,22 +81,15 @@ class Trainer:
             self.optimizer.step()
 
             mean_loss += loss.item()
-            self.writer.add_scalar(
-                "train/loss/iter", loss.item(), epoch * len(self.train_dataloader) + i
-            )  # TODO this loss is for the batch! I should divide it for the batch size! notie that batch could change, so use the tensor size
-            # TODO should be called mean_batch
-            # TODO add a new scalar to compare, if good, remove this above
+            self.writer.add_scalar("train/loss/mean_batch", loss.item() / X_batch.size(0), i)
 
         self.lr_scheduler.step()
 
-        self.writer.add_scalar(
-            "train/loss/mean", mean_loss / len(self.train_dataloader.dataset), epoch
-        )  # TODO should be called mean_epoch
+        self.writer.add_scalar("train/loss/mean_epoch", mean_loss / len(self.train_dataloader.dataset), epoch)
 
-        # TODO check how much time this takes at the end
         for name, weight in self.model.named_parameters():
-            self.writer.add_histogram(name, weight, epoch + 1)
-            self.writer.add_histogram(f"{name}.grad", weight.grad, epoch + 1)  # keep ?
+            self.writer.add_histogram(name.replace(".", "/"), weight, epoch)
+            self.writer.add_histogram(f"{name.replace('.', '/')}.grad", weight.grad, epoch)
 
     def _validate_epoch(self, epoch: int):
         acc = 0
@@ -92,7 +101,8 @@ class Trainer:
                     self.val_dataloader,
                     desc=f"Validating epoch #{epoch}",
                     leave=False,
-                )
+                ),
+                start=(epoch - 1) * len(self.val_dataloader) + 1,
             ):
                 X_batch, y_batch = X_batch.to(self.device), y_batch.to(self.device)
 
@@ -100,25 +110,20 @@ class Trainer:
                 loss = self.loss_fn(y_pred, y_batch)
 
                 mean_loss += loss.item()
-                self.writer.add_scalar("val/loss/iter", loss.item(), epoch * len(self.val_dataloader) + i)
-
-                # Verbose
-                # for i in range(X_batch.size(0)):
-                #     context_idxs = X_batch[i].tolist()
-                #     print(f"Context: {[Ind2word[idx] for idx in context_idxs]} | Pred: {Ind2word[y_pred[i].argmax().item()]} | GT: {Ind2word[y_batch[i].item()]}")
+                self.writer.add_scalar("val/loss/mean_batch", loss.item() / X_batch.size(0), i)
 
                 acc += (y_pred.argmax(dim=1) == y_batch).float().sum().item()
 
-        self.writer.add_scalar("val/loss/mean", mean_loss / len(self.val_dataloader.dataset), epoch)
-        self.writer.add_scalar("val/acc", acc / len(self.val_dataloader.dataset), epoch)
+        self.writer.add_scalar("val/loss/mean_epoch", mean_loss / len(self.val_dataloader.dataset), epoch)
+        self.writer.add_scalar("val/acc_epoch", acc / len(self.val_dataloader.dataset), epoch)
 
     def _save_model(self) -> None:
         embeddings = self.model.embeddings.weight.detach().cpu().numpy()
         self.writer.add_embedding(embeddings, metadata=self.vocab.itos(), tag="embeddings")
 
-        model_foder = os.path.join(self.save_folder_path, "model")
-        os.makedirs(model_foder)
-        np.save(os.path.join(model_foder, "word_embeddings.npy"), embeddings)
+        model_folder = os.path.join(self.save_folder_path, "model")
+        os.makedirs(model_folder)
+        np.save(os.path.join(model_folder, "word_embeddings.npy"), embeddings)
 
 
 class Evaluator:
@@ -129,7 +134,7 @@ class Evaluator:
 
     def evaluate(self):
         acc = 0
-        # self.model.to(self.device) # already in device?
+        self.model.to(self.device)
         self.model.eval()
         with torch.no_grad():
             for X_batch, y_batch in tqdm(self.dataloader, desc="Evaluating"):
@@ -137,11 +142,6 @@ class Evaluator:
                 y_batch = y_batch.to(self.device)
 
                 y_pred = self.model(X_batch)
-
-                # Verbose
-                # for i in range(X_batch.size(0)):
-                #     context_idxs = X_batch[i].tolist()
-                #     print(f"Context: {[Ind2word[idx] for idx in context_idxs]} | Pred: {Ind2word[y_pred[i].argmax().item()]} | GT: {Ind2word[y_batch[i].item()]}")
 
                 acc += (y_pred.argmax(dim=1) == y_batch).float().sum().item()
         print(f"Correct: {acc} from {len(self.dataloader.dataset)}")
