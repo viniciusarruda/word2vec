@@ -5,21 +5,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
-import time
-
-
-class Timelapse:
-    def __init__(self, name):
-        self.start = None
-        self.name = name
-
-    def __enter__(self):
-        self.start = time.time()
-        print(f"Begin {self.name}..")
-        return self
-
-    def __exit__(self, type, value, traceback):
-        print(f"End {self.name} (took {time.time() - self.start:.2f} seconds).")
 
 
 class Trainer:
@@ -114,16 +99,43 @@ class Trainer:
 
                 acc += (y_pred.argmax(dim=1) == y_batch).float().sum().item()
 
-        self.writer.add_scalar("val/loss/mean_epoch", mean_loss / len(self.val_dataloader.dataset), epoch)
-        self.writer.add_scalar("val/acc_epoch", acc / len(self.val_dataloader.dataset), epoch)
+            self.writer.add_scalar("val/loss/mean_epoch", mean_loss / len(self.val_dataloader.dataset), epoch)
+            self.writer.add_scalar("val/acc_epoch", acc / len(self.val_dataloader.dataset), epoch)
 
     def _save_model(self) -> None:
         embeddings = self.model.embeddings.weight.detach().cpu().numpy()
         self.writer.add_embedding(embeddings, metadata=self.vocab.itos(), tag="embeddings")
 
+        # model_folder = os.path.join(self.save_folder_path, "model")
+        # os.makedirs(model_folder)
+        # np.save(os.path.join(model_folder, "word_embeddings.npy"), embeddings)
+        self.save_embeddings()
+
+    def save_embeddings(self):
+        # TODO
+        # this is the wrong place to put this
+        # it should be vocab based, considering special tokens to remove it
+        embeddings = self.model.embeddings.weight.detach().cpu().numpy()
+
         model_folder = os.path.join(self.save_folder_path, "model")
         os.makedirs(model_folder)
-        np.save(os.path.join(model_folder, "word_embeddings.npy"), embeddings)
+        n = (
+            len(self.vocab.word_to_idx) - 2
+        )  # excluding special tokens, I know they are the first two ones but this is not save to do
+        d = embeddings.shape[1]
+        print(">>>>>>>>>>>>>>>> embeddings.shape", embeddings.shape)
+
+        # rows = (f"\n{w} {' '.join(embeddings[i, :])}" for i, w in self.vocab.idx_to_word.items())
+        # next(rows)  # skipping <pad>
+        # next(rows)  # skipping <unk>
+
+        with open(os.path.join(model_folder, "word_embeddings.txt"), "w", encoding="utf-8") as f:
+            f.write(f"{n} {d}")
+            # f.writelines(rows)
+            for i, w in self.vocab.idx_to_word.items():
+                if i > 1:  # skipping <pad> and <unk>
+                    f.write(f"\n{w} ")
+                    np.savetxt(f, embeddings[i, np.newaxis], fmt="%.12f", newline="")
 
 
 class Evaluator:

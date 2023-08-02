@@ -19,7 +19,7 @@ class CBOW(nn.Module):
     def __init__(self, vocab_size: int, embedding_dim: int):
         super().__init__()
 
-        self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim, mode="mean", max_norm=1)
+        self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim, mode="mean", max_norm=1, padding_idx=0)
         self.linear1 = nn.Linear(embedding_dim, vocab_size)
 
     def forward(self, x):

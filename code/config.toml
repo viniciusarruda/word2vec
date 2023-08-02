@@ -31,7 +31,7 @@ embedding_dim = 100 #300
 context_size = 5 # each side has context_size length
 
 [train]
-n_epochs = 5 #500
+n_epochs = 1 #500
 
 
 [visualization]
@@ -39,7 +39,7 @@ images_folder_path = "./images"
 
 
 [dataset]
-name = "nltk-brown" #"wikitext-2"
+name = "nltk-brown"
 
 
 # nltk-brown
@@ -50,7 +50,7 @@ file_path = "../dataset/nltk-brown/nltk-brown.train.tokens"
 
 # wikitext-2
 [dataset.wikitext-2.train]
-min_freq = 1
+min_freq = 5
 file_path = "../dataset/wikitext-2/wiki.train.tokens"
 
 [dataset.wikitext-2.validation]
