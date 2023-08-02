@@ -136,3 +136,25 @@ you need to compare what is the upper bound, use the word2vec original
 https://cnvrg.io/tensorboard-guide/
 https://www.machinelearningnuggets.com/tensorboard-tutorial/
 https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html -> pr curve might be interesting
+
+
+
+
+MAKE THIS WORD2VEC WORK! 
+THEN GO TO BOILERPLATE! FUCK
+ver os to do pelo codigo
+implementar o w2vec direito, ter certeza que está certo e depois experimentar e ajeitar codigo
+
+
+PAREI AQUI:
+check how to create a gensim word2vec stuff from np array and vocab
+this way can be easier to check this
+keep file to show that my implementation is right! I need to have the right version!
+
+quando eu tiver certeza que implementei certo, ai sim posso seguir!
+
+implementar o vector_analogy direito, fazer classe mesmo, e dane-se se for usar somente uma vez, a eficiencia tem que ser quando usar vaarias vezes durante um treino
+
+
+- when saving, save without special tokens
+- do I need to train <unk> token?

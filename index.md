@@ -1,0 +1,1 @@
+saga de entender o analogy
