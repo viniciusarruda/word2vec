@@ -90,7 +90,7 @@ class WordVectors:
     # TODO remove vectors as parameters since I'm not using this anymore!
     def most_similar(
         self, positive: list[str], negative: list[str], topn: int = 5, vectors: np.ndarray | None = None
-    ) -> tuple[bool, bool]:
+    ) -> list[tuple[str, float]]:
         if len(positive) == 0 or len(negative) == 0:
             raise NotImplementedError("Not implemented to receive empty positive or empty negative.")
 
