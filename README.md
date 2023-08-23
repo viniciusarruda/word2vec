@@ -1,4 +1,4 @@
-<a name="readme-top"></a>
+<!-- <a name="readme-top"></a> -->
 
 <br />
 <div align="center">
@@ -32,7 +32,7 @@ Clone this repo, create a new environment (recommended) and install the dependen
 pip install -r requirements.txt
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
 ## Usage
 
@@ -49,8 +49,6 @@ To use tensorboard (setting scalars to [show all datapoints](https://stackoverfl
 ```bash
 tensorboard --logdir .\experiment\wikitext-2\ --samples_per_plugin scalars=300000
 ```
-
-The dataset included in this repo can be downloaded [here](https://blog.salesforceairesearch.com/the-wikitext-long-term-dependency-language-modeling-dataset/#download).
 
 ### Compute analogies
 
