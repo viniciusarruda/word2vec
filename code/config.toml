@@ -27,19 +27,15 @@ pin_memory = true
 
 [model]
 name = "CBOW"
-embedding_dim = 100 #300
+embedding_dim = 300
 context_size = 5 # each side has context_size length
 
 [train]
-n_epochs = 1 #500
-
-
-[visualization]
-images_folder_path = "./images"
+n_epochs = 5
 
 
 [dataset]
-name = "nltk-brown"
+name = "wikitext-103"
 
 
 # nltk-brown

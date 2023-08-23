@@ -33,18 +33,9 @@ def load_config(config_file_path: str = "config.toml") -> dict:
 def main():
     config = load_config()
 
-    # determinism
     random.seed(config["experiment"]["seed"])
     np.random.seed(config["experiment"]["seed"])
     torch.manual_seed(config["experiment"]["seed"])
-    torch.cuda.manual_seed_all(config["experiment"]["seed"])
-    os.environ["PYTHONHASHSEED"] = str(
-        config["experiment"]["seed"]
-    )  # I think I need to set this before lauching python interpreter
-
-    # TODO this slows down training, so put a flag here and set it at config file
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
 
     dataloaders, vocab = get_processed_data(
         config["model"]["context_size"],

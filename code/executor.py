@@ -42,8 +42,6 @@ class Trainer:
             if self.val_dataloader is not None:
                 self._validate_epoch(epoch)
         self._save_model()
-        # TODO
-        # ja que coloquei coisa do tensorboard aqui, colocar as coisas do tensorboard dentro do save_model aqui
         self.writer.close()
 
     def _train_epoch(self, epoch: int):
@@ -119,19 +117,11 @@ class Trainer:
 
         model_folder = os.path.join(self.save_folder_path, "model")
         os.makedirs(model_folder)
-        n = (
-            len(self.vocab.word_to_idx) - 2
-        )  # excluding special tokens, I know they are the first two ones but this is not save to do
+        n = len(self.vocab.word_to_idx) - 2  # excluding special tokens, I know they are the first two ones
         d = embeddings.shape[1]
-        print(">>>>>>>>>>>>>>>> embeddings.shape", embeddings.shape)
-
-        # rows = (f"\n{w} {' '.join(embeddings[i, :])}" for i, w in self.vocab.idx_to_word.items())
-        # next(rows)  # skipping <pad>
-        # next(rows)  # skipping <unk>
 
         with open(os.path.join(model_folder, "word_embeddings.txt"), "w", encoding="utf-8") as f:
             f.write(f"{n} {d}")
-            # f.writelines(rows)
             for i, w in self.vocab.idx_to_word.items():
                 if i > 1:  # skipping <pad> and <unk>
                     f.write(f"\n{w} ")

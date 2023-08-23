@@ -108,7 +108,7 @@ class Vocabulary:
 
 
 class ContextDataset(Dataset):
-    # skip unknown words? they help to un-learn? haha
+    # Do I need to skip <unk> ? In other words, unknown words shouls be skipped during training? This is not mentioned anywhere
     def __init__(self, data_as_idxs: list[list[int]], context_size: int):
         self.context_size = context_size
         self.data_as_idxs = data_as_idxs
@@ -123,20 +123,7 @@ class ContextDataset(Dataset):
             self.sentence_idxs += [i] * len(sentence)
             self.cummulative_length.append(self.cummulative_length[-1] + len(sentence))
 
-    # TODO need to debug this to check if is correct
-    # continuar fazendo esse w2v funcionar!
-    # vc ta tao parado nas suas ideias doidas que esqueceu de fazer o negocio funcionar, para de inventar a roda e vai para o relevante!
-    # ver o lance do padding idx (comparar com embbed sum e mean) -> acho que ja vi alguem usando isso, ver suas tabs!
-    # debugar e ver se esta implementado certo aqui
-    # ver eficacia das coisas
-    # ir para hierarchical softmax
-    # dps negative sampling
-    # depois acabou tudo de word2vec
-    # ai ir para ajeitar o codigo (vai virar um boilerplate)
-    # e pronto!
-
     def __len__(self) -> int:
-        # return len(self.data_as_idxs) - 2 * self.context_size
         return self.length
 
     def __getitem__(self, idx):
@@ -147,6 +134,7 @@ class ContextDataset(Dataset):
         idx -= idx_offset
         assert idx >= 0
 
+        # if center is near begin or end, it will pad with <pad>
         left_context = max(self.context_size - idx, 0) * [0] + sentence[max(idx - self.context_size, 0) : idx]
 
         center_idx = sentence[idx]
@@ -154,17 +142,6 @@ class ContextDataset(Dataset):
         right_context = sentence[idx + 1 : idx + self.context_size + 1] + max(
             (idx + self.context_size + 1) - len(sentence), 0
         ) * [0]
-
-        # logica para right pad
-        # dps rever logica do left pad
-        # min(idx + self.context_size + 1, len(sentence)) - len(sentence)
-        # max(idx + self.context_size + 1, len(sentence)) - len(sentence)
-
-        # max(len(sentence) - self.context_size - 1, 0)
-        # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-        # if len(sentence) - self.context_size - 1 < idx:
-        #     precisa de pad
 
         context_idxs = left_context + right_context
 
@@ -174,20 +151,8 @@ class ContextDataset(Dataset):
 
         return context_input, center_idx
 
-    # def __getitem__(self, idx):
-    #     idx += self.context_size
-    #     left_context = self.data_as_idxs[idx - self.context_size : idx]
-    #     center_idx = self.data_as_idxs[idx]
-    #     right_context = self.data_as_idxs[idx + 1 : idx + self.context_size + 1]
-    #     context_idxs = left_context + right_context
-
-    #     context_input = torch.tensor(context_idxs, dtype=torch.long)
-
-    #     return context_input, center_idx
-
 
 def get_processed_data(context_size: int, dataset_config: dict, dataloader_config: dict, output_folder_path: str) -> dict:
-    # TODO colocar docstring automaticamente
     dataset_names = dataset_config.keys()
 
     stats_folder_path = os.path.join(output_folder_path, "stats")
@@ -225,61 +190,6 @@ def get_processed_data(context_size: int, dataset_config: dict, dataloader_confi
 
     dataloaders = {}
     for name in dataset_names:
-        print(name, dataloader_config[name])
         dataloaders[name] = DataLoader(datasets[name], **dataloader_config[name])
 
     return dataloaders, vocab
-
-
-if __name__ == "__main__":
-    from tqdm import tqdm
-
-    # data = [["This", "is", "a", "test", "!"]]
-
-    data = load_processed_file_data("../dataset/wikitext-103/wiki.train.tokens")
-
-    vocab = Vocabulary(data=data, min_freq=1)
-
-    print("--- Vocab ---")
-    # print(vocab.word_to_idx)
-    # print(vocab.idx_to_word)
-    print(vocab.idx_to_word[0])
-    print(vocab.idx_to_word[1])
-    print(vocab.default_token)
-    print(vocab.default_idx)
-    print(len(vocab))
-    print("-------------")
-
-    data_as_idxs = vocab.stoi(data)
-    del data
-    print("--- data_as_idxs ---")
-    # print(data_as_idxs[:10])
-    print("-------------")
-
-    dataset = ContextDataset(data_as_idxs, context_size=5)
-    print("--- dataset ---")
-    print(len(dataset))
-    # for i, item in enumerate(dataset):
-    #     print(item)
-    #     if i == 9:
-    #         break
-    print("-------------")
-
-    # dataloader = DataLoader(dataset, batch_size=512, shuffle=False, pin_memory=True, drop_last=True, num_workers=4)
-    dataloader = DataLoader(dataset, batch_size=512, shuffle=False, drop_last=True, num_workers=0)
-    print("--- dataloader ---")
-    print(len(dataloader))
-    # for i, item in enumerate(dataloader):
-    # print(item)
-    # if i == 9:
-    #     break
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    with Timelapse("Looping through dataloader"):
-        for X_batch, y_batch in tqdm(dataloader):
-            X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-            pass
-
-    print("-------------")
-    # debug everything, including iterating and lenghts of everything and dataloaders
-    # also check speed of dataloaders

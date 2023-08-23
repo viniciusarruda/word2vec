@@ -1,27 +1,9 @@
 import fire
 import numpy as np
 from tqdm import tqdm
-from gensim.models import KeyedVectors
 import gensim.downloader as api
 from word_vectors import WordVectors
-import math
 from prettytable import PrettyTable, MARKDOWN
-
-# I think I'll call the comparison as most_similar_implementation_check
-
-# # TODO
-# bring summary here
-# - make a split in if main entry to select to compare most_similar implementation (already done here)
-# - run models and build a table for comparison, e.g, mine run with google one, reporting top1 and top5 (see summary)
-
-# - check codes, clean, run evaluations, update repo
-
-# until here, can be done today, in 3 hours!!!!
-
-# then, study tomorrow hierarchical softmax and if feasible implement it here
-# also, see negative sampling, which I think it will work better.
-
-# this week you finish this repo! and then check the study plan, but only if relevant, because you need to go to transformers stuff and andrej stuff.
 
 
 def load_analogies(filepath: str) -> dict:
@@ -70,8 +52,8 @@ def dict2table(data: dict) -> str:
             total[k] += v
 
     # table._dividers[-1] = True
-    not_oov = total["Total"] - total["OOV"]
     # github seems to not like this last divider, thus use **bold** for the total row
+    not_oov = total["Total"] - total["OOV"]
     table.add_row(
         [
             "**Total**",

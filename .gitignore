@@ -1,5 +1,10 @@
+
+.vscode
 dataset/*
+!dataset/.gitkeep
+!dataset/word-test.v1.txt
 experiment/*
+!experiment/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
